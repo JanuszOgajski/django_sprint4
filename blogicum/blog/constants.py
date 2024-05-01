@@ -1,0 +1,3 @@
+LENGTH = 256
+
+NEW_POSTS = 10

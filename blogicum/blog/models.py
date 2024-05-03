@@ -2,10 +2,9 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 
-
 from core.models import BaseModel
 from blog.constants import LENGTH
-from .managers import PostManager
+from .managers import PublishedPostsManager
 
 
 User = get_user_model()
@@ -39,7 +38,7 @@ class Post(BaseModel):
     )
     image = models.ImageField(verbose_name='Картинка у публикации', blank=True)
 
-    post_manager = PostManager()
+    published_objects = PublishedPostsManager()
     objects = models.Manager()
 
     class Meta:
@@ -61,6 +60,7 @@ class Category(BaseModel):
         ' разрешены символы латиницы, цифры, дефис и подчёркивание.')
 
     class Meta:
+        ordering = ('title',)
         verbose_name = 'категория'
         verbose_name_plural = 'Категории'
 
@@ -69,6 +69,7 @@ class Location(BaseModel):
     name = models.CharField(max_length=LENGTH, verbose_name='Название места')
 
     class Meta:
+        ordering = ('name',)
         verbose_name = 'местоположение'
         verbose_name_plural = 'Местоположения'
 

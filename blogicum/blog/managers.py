@@ -2,7 +2,7 @@ from django.db.models import Manager
 from django.utils import timezone
 
 
-class PostManager(Manager):
+class PublishedPostsManager(Manager):
 
     def get_queryset(self):
         return super().get_queryset().filter(

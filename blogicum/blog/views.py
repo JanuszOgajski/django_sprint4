@@ -13,19 +13,19 @@ from blog.forms import PostForm, CommentForm
 from blog.constants import POSTS_BY_PAGE
 
 
-def paginator_obj(post_list):
-    return Paginator(post_list, POSTS_BY_PAGE)
+def paginator_obj(request, post_list):
+    page_number = request.GET.get('page')
+    return Paginator(post_list, POSTS_BY_PAGE).get_page(page_number)
 
 
-def order_and_comments(self):
+def annotate_comments_count(self):
     return self.order_by(
         '-pub_date').annotate(comment_count=Count('comments'))
 
 
 def index(request):
-    post_list = order_and_comments(Post.published_objects.all())
-    page_number = request.GET.get('page')
-    page_obj = paginator_obj(post_list).get_page(page_number)
+    post_list = annotate_comments_count(Post.published_objects.all())
+    page_obj = paginator_obj(request, post_list)
     return render(
         request,
         'blog/index.html',
@@ -41,8 +41,7 @@ def category_posts(request, category_slug):
     )
     post_list = category.posts(manager='published_objects').select_related(
         'location', 'category', 'author')
-    page_number = request.GET.get('page')
-    page_obj = paginator_obj(post_list).get_page(page_number)
+    page_obj = paginator_obj(request, post_list)
     context = {'page_obj': page_obj, 'category': category}
     return render(request, 'blog/category.html', context)
 
@@ -128,19 +127,17 @@ class ProfileListView(ListView):
     context_object_name = 'profile'
 
     def get_author(self):
-        username = self.kwargs.get('username')
-        author = get_object_or_404(User, username=username)
-        return author
+        return get_object_or_404(User, username=self.kwargs.get('username'))
 
     def get_queryset(self):
         if self.request.user == self.get_author():
-            query = Post.objects.select_related(
-                'category', 'author', 'location'
-            )
+            query = Post.objects
         else:
             query = Post.published_objects
-        return order_and_comments(
-            query.filter(author=self.get_author())
+        return annotate_comments_count(
+            query.select_related(
+                'category', 'author', 'location'
+            ).filter(author=self.get_author())
         )
 
     def get_context_data(self, **kwargs):
